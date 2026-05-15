@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Techno Future - Download Now</title>
+
+    <!-- Google Fonts: Orbitron untuk tampilan futuristik -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-magenta: #ff00e5;
+            --neon-purple: #b300ff;
+            --dark-bg: #050510;
+            --card-bg: rgba(10, 10, 30, 0.7);
+            --glow-cyan: 0 0 10px #00f0ff, 0 0 30px #00f0ff88, 0 0 60px #00f0ff44;
+            --glow-magenta: 0 0 10px #ff00e5, 0 0 30px #ff00e588, 0 0 60px #ff00e544;
+            --glow-purple: 0 0 10px #b300ff, 0 0 30px #b300ff88, 0 0 60px #b300ff44;
+            --text-glow: 0 0 5px #fff, 0 0 15px #00f0ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', 'Segoe UI', sans-serif;
+            background-color: var(--dark-bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            cursor: default;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ============================================
+           CANVAS PARTIKEL - Latar belakang dinamis
+           ============================================ */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ============================================
+           GRID PERSPEKTIF - Efek lantai cyberpunk
+           ============================================ */
+        .grid-floor {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                /* Garis horizontal */
+                repeating-linear-gradient(to bottom,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 240, 255, 0.06) 2px,
+                    rgba(0, 240, 255, 0.06) 4px),
+                /* Garis vertikal - perspective */
+                repeating-linear-gradient(90deg,
+                    transparent,
+                    transparent 40px,
+                    rgba(0, 240, 255, 0.04) 40px,
+                    rgba(0, 240, 255, 0.04) 42px);
+            mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.15) 40%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.15) 40%, transparent 100%);
+            transform: perspective(500px) rotateX(60deg);
+            transform-origin: bottom center;
+            animation: gridPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes gridPulse {
+            0%,
+            100% {
+                opacity: 0.7;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* ============================================
+           SCANLINES - Efek monitor CRT retro-future
+           ============================================ */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            background: repeating-linear-gradient(to bottom,
+                    transparent,
+                    transparent 3px,
+                    rgba(0, 0, 0, 0.03) 3px,
+                    rgba(0, 0, 0, 0.03) 6px);
+        }
+
+        /* Garis scan bergerak */
+        .scanline-move {
+            position: fixed;
+            top: -10%;
+            left: 0;
+            width: 100%;
+            height: 8%;
+            z-index: 1;
+            pointer-events: none;
+            background: linear-gradient(to bottom,
+                    transparent 0%,
+                    rgba(0, 240, 255, 0.03) 40%,
+                    rgba(0, 240, 255, 0.06) 50%,
+                    rgba(0, 240, 255, 0.03) 60%,
+                    transparent 100%);
+            animation: scanMove 6s linear infinite;
+        }
+
+        @keyframes scanMove {
+            0% {
+                top: -10%;
+            }
+            100% {
+                top: 110%;
+            }
+        }
+
+        /* ============================================
+           KONTAINER UTAMA
+           ============================================ */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* ============================================
+           LINGKARAN ORBIT DEKORATIF
+           ============================================ */
+        .orbit-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            pointer-events: none;
+            z-index: -1;
+            animation: orbitSpin 20s linear infinite;
+        }
+        .orbit-ring:nth-child(1) {
+            width: 350px;
+            height: 350px;
+            border-color: rgba(0, 240, 255, 0.25);
+            animation-duration: 18s;
+        }
+        .orbit-ring:nth-child(2) {
+            width: 420px;
+            height: 420px;
+            border-color: rgba(255, 0, 229, 0.2);
+            animation-duration: 25s;
+            animation-direction: reverse;
+        }
+        .orbit-ring:nth-child(3) {
+            width: 500px;
+            height: 500px;
+            border-color: rgba(179, 0, 255, 0.15);
+            animation-duration: 30s;
+        }
+
+        /* Titik kecil yang berputar di orbit */
+        .orbit-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            box-shadow: var(--glow-cyan);
+            background: #00f0ff;
+            animation: orbitSpin 18s linear infinite;
+        }
+        .orbit-dot.dot-2 {
+            background: #ff00e5;
+            box-shadow: var(--glow-magenta);
+            animation-duration: 25s;
+            animation-direction: reverse;
+            width: 6px;
+            height: 6px;
+        }
+        .orbit-dot.dot-3 {
+            background: #b300ff;
+            box-shadow: var(--glow-purple);
+            animation-duration: 30s;
+            width: 5px;
+            height: 5px;
+        }
+
+        @keyframes orbitSpin {
+            from {
+                transform: rotate(0deg) translateX(175px) rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg) translateX(175px) rotate(-360deg);
+            }
+        }
+        .dot-2 {
+            animation: orbitSpin2 25s linear infinite reverse;
+        }
+        @keyframes orbitSpin2 {
+            from {
+                transform: rotate(0deg) translateX(210px) rotate(0deg);
+            }
+            to {
+                transform: rotate(-360deg) translateX(210px) rotate(360deg);
+            }
+        }
+        .dot-3 {
+            animation: orbitSpin3 30s linear infinite;
+        }
+        @keyframes orbitSpin3 {
+            from {
+                transform: rotate(0deg) translateX(250px) rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg) translateX(250px) rotate(-360deg);
+            }
+        }
+
+        /* ============================================
+           TEKS DEKORATIF
+           ============================================ */
+        .subtitle-top {
+            font-size: 0.75rem;
+            letter-spacing: 0.5em;
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            opacity: 0.8;
+            animation: flickerText 3s ease-in-out infinite;
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+        }
+
+        .main-title {
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            color: #fff;
+            margin-bottom: 8px;
+            text-shadow: var(--text-glow);
+            animation: glitchTitle 5s ease-in-out infinite;
+            position: relative;
+        }
+
+        .main-title .highlight {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 20px #00f0ff, 0 0 50px #00f0ff66;
+        }
+
+        .tagline {
+            font-size: 0.85rem;
+            letter-spacing: 0.3em;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 50px;
+            text-transform: uppercase;
+        }
+
+        @keyframes flickerText {
+            0%,
+            100% {
+                opacity: 0.8;
+            }
+            50% {
+                opacity: 1;
+            }
+            92% {
+                opacity: 0.8;
+            }
+            93% {
+                opacity: 0.3;
+            }
+            94% {
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes glitchTitle {
+            0%,
+            90%,
+            100% {
+                transform: translateX(0);
+                text-shadow: var(--text-glow);
+            }
+            91% {
+                transform: translateX(-3px) skewX(-2deg);
+                text-shadow: -3px 0 #ff00e5, 3px 0 #00f0ff;
+            }
+            92% {
+                transform: translateX(3px) skewX(2deg);
+                text-shadow: 3px 0 #ff00e5, -3px 0 #00f0ff;
+            }
+            93% {
+                transform: translateX(-2px);
+                text-shadow: -2px 0 #ff00e5, 2px 0 #00f0ff;
+            }
+            94% {
+                transform: translateX(0);
+                text-shadow: var(--text-glow);
+            }
+        }
+
+        /* ============================================
+           TOMBOL UTAMA - Neon Glow Futuristik
+           ============================================ */
+        .btn-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Efek pulsing di belakang tombol */
+        .btn-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border-radius: 60px;
+            background: transparent;
+            box-shadow: 0 0 40px 10px rgba(0, 240, 255, 0.25);
+            animation: pulseRing 2s ease-out infinite;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .btn-pulse:nth-child(2) {
+            animation-delay: 0.7s;
+            box-shadow: 0 0 30px 8px rgba(255, 0, 229, 0.2);
+        }
+        .btn-pulse:nth-child(3) {
+            animation-delay: 1.4s;
+            box-shadow: 0 0 25px 6px rgba(179, 0, 255, 0.18);
+        }
+
+        @keyframes pulseRing {
+            0% {
+                transform: translate(-50%, -50%) scale(0.9);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.6);
+                opacity: 0;
+            }
+        }
+
+        .btn-download {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 18px 50px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: #ffffff;
+            background: linear-gradient(135deg,
+                    rgba(0, 20, 40, 0.9) 0%,
+                    rgba(10, 10, 40, 0.95) 50%,
+                    rgba(20, 0, 40, 0.9) 100%);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 60px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+            box-shadow:
+                0 0 15px rgba(0, 240, 255, 0.4),
+                0 0 40px rgba(0, 240, 255, 0.2),
+                inset 0 0 15px rgba(0, 240, 255, 0.05);
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        /* Efek shine di dalam tombol */
+        .btn-download::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg,
+                    transparent,
+                    rgba(0, 240, 255, 0.1),
+                    transparent,
+                    rgba(255, 0, 229, 0.08),
+                    transparent);
+            animation: btnShine 4s linear infinite;
+            z-index: -1;
+            transition: opacity 0.4s;
+        }
+
+        @keyframes btnShine {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Hover state */
+        .btn-download:hover {
+            color: #000;
+            background: var(--neon-cyan);
+            border-color: #fff;
+            box-shadow:
+                0 0 30px rgba(0, 240, 255, 0.8),
+                0 0 70px rgba(0, 240, 255, 0.5),
+                0 0 120px rgba(0, 240, 255, 0.3),
+                inset 0 0 30px rgba(255, 255, 255, 0.2);
+            transform: scale(1.06);
+            letter-spacing: 0.22em;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1.3);
+        }
+
+        .btn-download:hover .btn-icon {
+            filter: brightness(0) invert(0);
+            animation: iconBounce 0.5s ease-in-out;
+        }
+
+        .btn-download:active {
+            transform: scale(0.96);
+            transition: transform 0.1s ease;
+            box-shadow:
+                0 0 20px rgba(0, 240, 255, 0.6),
+                0 0 50px rgba(0, 240, 255, 0.3);
+        }
+
+        /* Ikon Play Store di dalam tombol */
+        .btn-icon {
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.6));
+        }
+
+        @keyframes iconBounce {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-8px);
+            }
+            60% {
+                transform: translateY(-3px);
+            }
+        }
+
+        /* ============================================
+           PARTIKEL KECIL MENGAPUNG DI SEKITAR TOMBOL
+           ============================================ */
+        .floating-particles {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .float-dot {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #00f0ff;
+            box-shadow: 0 0 8px #00f0ff;
+            animation: floatAround 6s ease-in-out infinite;
+        }
+        .float-dot:nth-child(1) {
+            top: 10%;
+            left: 20%;
+            animation-delay: 0s;
+        }
+        .float-dot:nth-child(2) {
+            top: 80%;
+            left: 70%;
+            animation-delay: 1.5s;
+            background: #ff00e5;
+            box-shadow: 0 0 8px #ff00e5;
+        }
+        .float-dot:nth-child(3) {
+            top: 50%;
+            left: 85%;
+            animation-delay: 3s;
+            background: #b300ff;
+            box-shadow: 0 0 8px #b300ff;
+        }
+        .float-dot:nth-child(4) {
+            top: 30%;
+            left: 75%;
+            animation-delay: 4.5s;
+        }
+        .float-dot:nth-child(5) {
+            top: 70%;
+            left: 15%;
+            animation-delay: 2s;
+            background: #ff00e5;
+            box-shadow: 0 0 8px #ff00e5;
+        }
+        .float-dot:nth-child(6) {
+            top: 15%;
+            left: 60%;
+            animation-delay: 5s;
+            background: #b300ff;
+            box-shadow: 0 0 8px #b300ff;
+        }
+
+        @keyframes floatAround {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.8;
+            }
+            25% {
+                transform: translate(15px, -20px) scale(1.8);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(-10px, -5px) scale(1);
+                opacity: 0.5;
+            }
+            75% {
+                transform: translate(-18px, 15px) scale(2);
+                opacity: 1;
+            }
+        }
+
+        /* ============================================
+           FOOTER TEKS
+           ============================================ */
+        .footer-text {
+            margin-top: 50px;
+            font-size: 0.65rem;
+            letter-spacing: 0.25em;
+            color: rgba(255, 255, 255, 0.35);
+            text-transform: uppercase;
+        }
+        .footer-text span {
+            color: var(--neon-cyan);
+            opacity: 0.7;
+        }
+
+        /* ============================================
+           RESPONSIF
+           ============================================ */
+        @media (max-width: 600px) {
+            .btn-download {
+                padding: 15px 35px;
+                font-size: 1rem;
+                gap: 10px;
+                letter-spacing: 0.1em;
+            }
+            .btn-icon {
+                width: 22px;
+                height: 22px;
+            }
+            .orbit-ring:nth-child(1) {
+                width: 240px;
+                height: 240px;
+            }
+            .orbit-ring:nth-child(2) {
+                width: 290px;
+                height: 290px;
+            }
+            .orbit-ring:nth-child(3) {
+                width: 350px;
+                height: 350px;
+            }
+            .orbit-dot {
+                animation: orbitSpinSmall1 18s linear infinite;
+            }
+            .dot-2 {
+                animation: orbitSpinSmall2 25s linear infinite reverse;
+            }
+            .dot-3 {
+                animation: orbitSpinSmall3 30s linear infinite;
+            }
+            @keyframes orbitSpinSmall1 {
+                from {
+                    transform: rotate(0deg) translateX(120px) rotate(0deg);
+                }
+                to {
+                    transform: rotate(360deg) translateX(120px) rotate(-360deg);
+                }
+            }
+            @keyframes orbitSpinSmall2 {
+                from {
+                    transform: rotate(0deg) translateX(145px) rotate(0deg);
+                }
+                to {
+                    transform: rotate(-360deg) translateX(145px) rotate(360deg);
+                }
+            }
+            @keyframes orbitSpinSmall3 {
+                from {
+                    transform: rotate(0deg) translateX(175px) rotate(0deg);
+                }
+                to {
+                    transform: rotate(360deg) translateX(175px) rotate(-360deg);
+                }
+            }
+            .main-title {
+                font-size: 1.6rem;
+            }
+            .tagline {
+                font-size: 0.7rem;
+                margin-bottom: 35px;
+            }
+            .floating-particles {
+                width: 200px;
+                height: 200px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .btn-download {
+                padding: 13px 28px;
+                font-size: 0.9rem;
+                letter-spacing: 0.06em;
+                gap: 8px;
+            }
+            .btn-icon {
+                width: 20px;
+                height: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Canvas untuk partikel latar belakang -->
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- Grid lantai perspektif -->
+    <div class="grid-floor"></div>
+
+    <!-- Scanlines CRT -->
+    <div class="scanlines"></div>
+    <div class="scanline-move"></div>
+
+    <!-- Kontainer utama -->
+    <div class="main-container">
+
+        <!-- Orbit rings dekoratif -->
+        <div class="orbit-ring"></div>
+        <div class="orbit-ring"></div>
+        <div class="orbit-ring"></div>
+        <div class="orbit-dot"></div>
+        <div class="orbit-dot dot-2"></div>
+        <div class="orbit-dot dot-3"></div>
+
+        <!-- Partikel mengapung di sekitar tombol -->
+        <div class="floating-particles">
+            <div class="float-dot"></div>
+            <div class="float-dot"></div>
+            <div class="float-dot"></div>
+            <div class="float-dot"></div>
+            <div class="float-dot"></div>
+            <div class="float-dot"></div>
+        </div>
+
+        <!-- Teks atas -->
+        <p class="subtitle-top">◆ System Online ◆</p>
+
+        <!-- Judul utama -->
+        <h1 class="main-title">
+            <span class="highlight">TECHNO</span> FUTURE
+        </h1>
+        <p class="tagline">The Next Generation Awaits</p>
+
+        <!-- Tombol Download -->
+        <div class="btn-wrapper">
+            <div class="btn-pulse"></div>
+            <div class="btn-pulse"></div>
+            <div class="btn-pulse"></div>
+            <a href="https://play.google.com/store/apps/details?id=com.example.app"
+            class="btn-download"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Download di Google Play Store">
+            <!-- Ikon Play Store SVG -->
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.199l2.807 1.626a1 1 0 0 1 0 1.732l-2.807 1.626L15.206 12l2.492-2.492zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/>
+            </svg>
+            DOWNLOAD NOW
+        </a>
+    </div>
+
+    <!-- Footer -->
+    <p class="footer-text">Available on <span>Google Play</span> • v2.0.24</p>
+</div>
+
+<script>
+    // ============================================
+    // CANVAS PARTIKEL - Animasi latar belakang
+    // ============================================
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let particles = [];
+    const particleCount = 100;
+    let mouseX = -1000;
+    let mouseY = -1000;
+    let animationId;
+
+    // Resize canvas
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+        initParticles();
+    });
+    resizeCanvas();
+
+    // Track mouse
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
+    document.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+            mouseX = e.touches[0].clientX;
+            mouseY = e.touches[0].clientY;
+        }
+    }, { passive: true });
+    document.addEventListener('mouseleave', () => {
+        mouseX = -1000;
+        mouseY = -1000;
+    });
+
+    // Partikel class
+    class Particle {
+        constructor() {
+            this.reset();
+            // Posisi awal random di seluruh canvas
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+        }
+
+        reset() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 2.5 + 0.8;
+            this.speedX = (Math.random() - 0.5) * 0.6;
+            this.speedY = (Math.random() - 0.5) * 0.6;
+            // Warna neon random
+            const colors = [
+                { r: 0, g: 240, b: 255 }, // cyan
+                { r: 255, g: 0, b: 229 }, // magenta
+                { r: 179, g: 0, b: 255 }, // purple
+                { r: 100, g: 200, b: 255 }, // light blue
+            ];
+            const chosen = colors[Math.floor(Math.random() * colors.length)];
+            this.color = `rgba(${chosen.r}, ${chosen.g}, ${chosen.b}, `;
+            this.opacity = Math.random() * 0.7 + 0.3;
+        }
+
+        update() {
+            // Gerakan dasar
+            this.x += this.speedX;
+            this.y += this.speedY;
+
+            // Tarik-menarik ringan ke arah mouse
+            const dx = mouseX - this.x;
+            const dy = mouseY - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 200 && dist > 0) {
+                const force = 0.015;
+                this.speedX += (dx / dist) * force;
+                this.speedY += (dy / dist) * force;
+            }
+
+            // Batasi kecepatan
+            const maxSpeed = 2;
+            const speed = Math.sqrt(this.speedX * this.speedX + this.speedY * this.speedY);
+            if (speed > maxSpeed) {
+                this.speedX = (this.speedX / speed) * maxSpeed;
+                this.speedY = (this.speedY / speed) * maxSpeed;
+            }
+
+            // Redaman
+            this.speedX *= 0.999;
+            this.speedY *= 0.999;
+
+            // Wrap around edges
+            if (this.x < -20) this.x = canvas.width + 20;
+            if (this.x > canvas.width + 20) this.x = -20;
+            if (this.y < -20) this.y = canvas.height + 20;
+            if (this.y > canvas.height + 20) this.y = -20;
+
+            // Twinkle opacity
+            this.opacity += (Math.random() - 0.5) * 0.02;
+            this.opacity = Math.max(0.2, Math.min(1, this.opacity));
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = this.color + this.opacity + ')';
+            ctx.fill();
+
+            // Glow
+            if (this.size > 1.5) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = this.color + (this.opacity * 0.15) + ')';
+                ctx.fill();
+            }
+        }
+    }
+
+    function initParticles() {
+        particles = [];
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+    }
+    initParticles();
+
+    // Garis koneksi antar partikel yang berdekatan
+    function drawConnections() {
+        const maxDist = 120;
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < maxDist) {
+                    const alpha = (1 - dist / maxDist) * 0.12;
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = `rgba(0, 240, 255, ${alpha})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Update & draw particles
+        for (const p of particles) {
+            p.update();
+            p.draw();
+        }
+
+        // Draw connections
+        drawConnections();
+
+        animationId = requestAnimationFrame(animate);
+    }
+    animate();
+
+    // ============================================
+    // EFEK RIPPLE SAAT KLIK TOMBOL
+    // ============================================
+    const btn = document.querySelector('.btn-download');
+    btn.addEventListener('click', function(e) {
+        // Efek visual tambahan: buat partikel ledakan kecil
+        const rect = btn.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        for (let i = 0; i < 15; i++) {
+            const spark = document.createElement('div');
+            spark.style.cssText = `
+                        position: fixed;
+                        left: ${cx}px;
+                        top: ${cy}px;
+                        width: 6px;
+                        height: 6px;
+                        border-radius: 50%;
+                        background: #00f0ff;
+                        box-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff;
+                        pointer-events: none;
+                        z-index: 999;
+                        transition: all 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+                        opacity: 1;
+                    `;
+            document.body.appendChild(spark);
+
+            const angle = (Math.PI * 2 * i) / 15;
+            const distance = 60 + Math.random() * 80;
+            const dx = Math.cos(angle) * distance;
+            const dy = Math.sin(angle) * distance;
+
+            requestAnimationFrame(() => {
+                spark.style.transform = `translate(${dx}px, ${dy}px) scale(0)`;
+                spark.style.opacity = '0';
+            });
+
+            setTimeout(() => {
+                spark.remove();
+            }, 900);
+        }
+    });
+
+    console.log('%c🚀 Techno Future Landing Page %cReady',
+        'color: #00f0ff; font-size: 1.2em; font-weight: bold;',
+        'color: #fff;');
+    console.log('%cTombol mengarah ke Google Play Store', 'color: #ff00e5;');
+</script>
+</body>
+</html>
